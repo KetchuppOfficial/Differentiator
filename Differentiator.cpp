@@ -1,9 +1,8 @@
 #include "Differentiator.h"
 #include "Functions.h"
-#include "Reading_File.h"
-#include "Log_File.h"
+#include "./Auxiliaries/Reading_File.h"
+#include "./Auxiliaries/Log_File.h"
 
-extern const char *DIFF_EXPRESSION_FILE;
 extern const char *TEX_FILE;
 
 //*****************************************************************************************************************
@@ -40,8 +39,8 @@ int Diff_Every_Var (struct Node *root_ptr)
         }
         else
         {
-            sprintf (buffer_1, "Derivative.dot");
-            sprintf (buffer_2, "Derivative.png");
+            sprintf (buffer_1, "./Output/Derivative.dot");
+            sprintf (buffer_2, "./Output/Derivative.png");
         }
 
         Tree_Dump (tree_arr[i], buffer_1, buffer_2, vars_arr[i]);

@@ -1,5 +1,5 @@
 #include "Stack.h"
-#include "../Log_File.h"
+#include "../Auxiliaries/Log_File.h"
 
 static int    Start_Initialization (struct Stack *stack_ptr);
 static int    Stack_Resize_Up      (struct Stack *stack_ptr);

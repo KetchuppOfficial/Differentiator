@@ -1,7 +1,7 @@
 #include "Differentiator.h"
 #include "Functions.h"
-#include "Reading_File.h"
-#include "Log_File.h"
+#include "./Auxiliaries/Reading_File.h"
+#include "./Auxiliaries/Log_File.h"
 
 #define DEBUG 0
 #define EVERY_SYMB_DUMB 0

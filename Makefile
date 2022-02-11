@@ -2,7 +2,8 @@ CC = g++
 
 CFLAGS = -c
 
-OBJ_FILES = main.o Lexer.o Parser.o Differentiator.o ./Stack/Stack.o Reading_File.o Log_File.o
+OBJ_FILES = main.o Lexer.o Parser.o Differentiator.o ./Stack/Stack.o 			\
+			./Auxiliaries/Reading_File.o ./Auxiliaries/Log_File.o
 
 FUNC_FILE = Function.txt
 
@@ -24,16 +25,16 @@ Differentiator.o: Differentiator.cpp
 Stack.o: ./Stack/Stack.cpp
 	$(CC) $(CFLAGS) ./Stack/Stack.cpp -o ./Stack/Stack.o
 
-Reading_File.o: Reading_File.cpp
-	$(CC) $(CFLAGS) Reading_File.cpp -o Reading_File.o
+Reading_File.o: ./Auxiliaries/Reading_File.cpp
+	$(CC) $(CFLAGS) ./Auxiliaries/Reading_File.cpp -o ./Auxiliaries/Reading_File.o
 
-Log_File.o: Log_File.cpp
-	$(CC) $(CFLAGS) Log_File.cpp -o Log_File.o
+Log_File.o: ./Auxiliaries/Log_File.cpp
+	$(CC) $(CFLAGS) ./Auxiliaries/Log_File.cpp -o ./Auxiliaries/Log_File.o
 
 run:
 	./Differentiator.out $(FUNC_FILE)
 
 clean:
 	rm $(OBJ_FILES)
-	rm -rf *.dot
+	rm -rf ./Output/*.dot
 	rm Differentiator.out

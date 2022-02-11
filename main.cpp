@@ -1,8 +1,8 @@
 #include "Differentiator.h"
-#include "Log_File.h"
+#include "./Auxiliaries/Log_File.h"
 
-const char *EXPRESSION_FILE = "Expression_Text.dot";
-const char *TEX_FILE        = "Tex_File.txt";
+const char *EXPRESSION_FILE = "./Output/Expression_Text.dot";
+const char *TEX_FILE        = "./Output/Tex_File.txt";
 
 int main (int argc, char *argv[])
 {
@@ -15,7 +15,7 @@ int main (int argc, char *argv[])
 
     struct Node *root_ptr = Plant_Tree (token_arr, n_tokens);
 
-    Tree_Dump (root_ptr, EXPRESSION_FILE, "Function.png", 0);
+    Tree_Dump (root_ptr, EXPRESSION_FILE, "./Output/Function.png", 0);
 
     Diff_Every_Var (root_ptr);
 

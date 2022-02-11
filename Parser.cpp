@@ -3,8 +3,8 @@
 
 #include "Differentiator.h"
 #include "./Stack/Stack.h"
-#include "Reading_File.h"
-#include "Log_File.h"
+#include "./Auxiliaries/Reading_File.h"
+#include "./Auxiliaries/Log_File.h"
 
 #define Universal_If(function)              \
 do                                          \
