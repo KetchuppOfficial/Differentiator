@@ -1,40 +1,52 @@
-CC = g++
+CC     = gcc
+CFLAGS = -Wall -Werror -Wextra -Wshadow -Wswitch-default -Wfloat-equal
 
-CFLAGS = -c
+PROJECT = Differentiator
 
-OBJ_FILES = main.o Lexer.o Parser.o Differentiator.o ./Stack/Stack.o 			\
-			./Auxiliaries/Reading_File.o ./Auxiliaries/Log_File.o
+BIN      = ./bin/
+SRCDIR   = ./src/
+BUILDDIR = ./build/
 
-FUNC_FILE = Function.txt
+SRC_LIST = main.c Lexer.c Parser.c Stack.c Graphic_Dump.c Differentiator.c
+SRC = $(addprefix $(SRCDIR), $(SRC_LIST))
 
-Differentiator: main.o Lexer.o Parser.o Differentiator.o Stack.o Reading_File.o Log_File.o
-	$(CC) $(OBJ_FILES) -o Differentiator.out
+SUBS := $(SRC)
+SUBS := $(subst $(SRCDIR), $(BUILDDIR), $(SUBS))
 
-main.o: main.cpp
-	$(CC) $(CFLAGS) main.cpp -o main.o
+OBJ  = $(SUBS:.c=.o)
+DEPS = $(SUBS:.c=.d)
 
-Lexer.o: Lexer.cpp
-	$(CC) $(CFLAGS) Lexer.cpp -o Lexer.o
+LIBS_LIST = My_Lib
+LIBSDIR = $(addprefix ./, $(LIBS_LIST))
+LIBS = $(addsuffix /*.a, $(LIBSDIR))
 
-Parser.o: Parser.cpp
-	$(CC) $(CFLAGS) Parser.cpp -o Parser.o
+.PHONY: all $(LIBSDIR)
 
-Differentiator.o: Differentiator.cpp
-	$(CC) $(CFLAGS) Differentiator.cpp -o Differentiator.o
+all: $(DEPS) $(OBJ) $(LIBSDIR)
+	@mkdir -p $(BIN)
+	@echo "Linking project..."
+	@$(CC) $(OBJ) $(LIBS) -lm -o $(BIN)$(PROJECT).out
 
-Stack.o: ./Stack/Stack.cpp
-	$(CC) $(CFLAGS) ./Stack/Stack.cpp -o ./Stack/Stack.o
+$(LIBSDIR):
+	@$(MAKE) -C $@ --no-print-directory -f Makefile.mak
 
-Reading_File.o: ./Auxiliaries/Reading_File.cpp
-	$(CC) $(CFLAGS) ./Auxiliaries/Reading_File.cpp -o ./Auxiliaries/Reading_File.o
+$(BUILDDIR)%.o: $(SRCDIR)%.c
+	@mkdir -p $(dir $@)
+	@echo "Compiling \"$<\"..."
+	@$(CC) $(CFLAGS) -g $(OPT) -c -I$(LIBSDIR) $< -o $@
 
-Log_File.o: ./Auxiliaries/Log_File.cpp
-	$(CC) $(CFLAGS) ./Auxiliaries/Log_File.cpp -o ./Auxiliaries/Log_File.o
+include $(DEPS)
 
-run:
-	./Differentiator.out $(FUNC_FILE)
+$(BUILDDIR)%.d: $(SRCDIR)%.c
+	@echo "Collecting dependencies for \"$<\"..."
+	@mkdir -p $(dir $@)
+	@$(CC) -E $(CFLAGS) -I$(LIBSDIR) $< -MM -MT $(@:.d=.o) > $@
+
+.PHONY: run clean
 
 clean:
-	rm $(OBJ_FILES)
-	rm -rf ./Output/*.dot
-	rm Differentiator.out
+	rm -rf $(OBJ) $(DEPS)
+
+run: $(BIN)$(PROJECT).out
+	@echo "Running \"$<\"..."
+	@$(BIN)$(PROJECT).out $(IN)
