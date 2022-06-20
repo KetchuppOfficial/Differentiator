@@ -21,8 +21,6 @@ int main (int argc, char *argv[])
 
     free (token_arr);
 
-    Tree_Dump (root, "./Output/Expression_Text.dot", "./Output/Function.png", "x");
-
     Differentiator (root);
 
     Tree_Destructor (root);
