@@ -33,7 +33,7 @@ git submodule init
 git submodule update
 ```
 
-**Step 3:** Install Graphviz if it's not installed
+**Step 3:** Install Graphviz, if it's not installed
 ```bash
 sudo apt install graphviz
 ```
@@ -63,7 +63,7 @@ Linking project...
 ```bash
 make run IN=input_file_name
 ```
-The program won't work if you don't specify **input_file_name**.
+The program won't work, if you don't specify **input_file_name**.
 
 ## Examples
 
