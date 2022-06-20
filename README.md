@@ -36,4 +36,50 @@ git submodule update
 **Step 3:** Build the project. 
 ```bash
 username@machine:~/Differentiator$ make
+Collecting dependencies for "src/Differentiator.c"...
+Collecting dependencies for "src/Graphic_Dump.c"...
+Collecting dependencies for "src/Stack.c"...
+Collecting dependencies for "src/Parser.c"...
+Collecting dependencies for "src/Lexer.c"...
+Collecting dependencies for "src/main.c"...
+Compiling "src/main.c"...
+Compiling "src/Lexer.c"...
+Compiling "src/Parser.c"...
+Compiling "src/Stack.c"...
+Compiling "src/Graphic_Dump.c"...
+Compiling "src/Differentiator.c"...
+Collecting dependencies for "src/My_Lib.c"...
+Compiling "src/My_Lib.c"...
+ar: creating My_Lib.a
+Linking project...
 ```
+
+**Step 4:** Running
+```bash
+make run IN=input_file_name
+```
+The program won't work if you don't specify **input_file_name**.
+
+## Examples
+
+    1) f(x) = x ^ x
+
+Function:
+
+![x_pow_x](/examples/x_pow_x.png)
+
+Derivative of x:
+
+![x_pow_x_der](/examples/x_pow_x_der.png)
+
+    2) f(x, y) = y * sin (x / 5) + y ^ cos (x * y)
+
+Function of x and y:
+
+![foo_of_x](/examples/Function_Of_x.png)
+![foo_of_y](/examples/Function_Of_y.png)
+
+Derivatives of x and y
+
+![der_of_x](/examples/Partial_Derivative_Of_x.png)
+![der_of_y](/examples/Partial_Derivative_Of_y.png)
