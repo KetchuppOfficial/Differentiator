@@ -74,12 +74,18 @@ Derivative of x:
 
     2) f(x, y) = y * sin (x / 5) + y ^ cos (x * y)
 
-Function of x and y:
+Function of x:
 
 ![foo_of_x](/examples/Function_Of_x.png)
+
+Function of xy:
+
 ![foo_of_y](/examples/Function_Of_y.png)
 
-Derivatives of x and y
+Derivatives of x:
 
 ![der_of_x](/examples/Partial_Derivative_Of_x.png)
+
+Derivatives of y:
+
 ![der_of_y](/examples/Partial_Derivative_Of_y.png)
