@@ -1,11 +1,11 @@
 #include "../include/Differentiator.h"
 #include "My_Lib.h"
 
-static int Node_Dump   (struct Node *node_ptr, FILE *graph_file, const char *var);
-static int Arrows_Dump (struct Node *node_ptr, FILE *graph_file);
+static int Node_Dump   (const struct Node *node_ptr, FILE *graph_file, const char *var);
+static int Arrows_Dump (const struct Node *node_ptr, FILE *graph_file);
 static int Print_Dump  (const char *text_file_name, const char *image_file_name);
 
-int Tree_Dump (struct Node *root_ptr, const char *text_file_name, const char *image_file_name, const char *var)
+int Tree_Dump (const struct Node *root_ptr, const char *text_file_name, const char *image_file_name, const char *var)
 {
     MY_ASSERT (root_ptr,        "struct Node *root_ptr",       NULL_PTR, ERROR);
     MY_ASSERT (text_file_name,  "const char *text_file_name",  NULL_PTR, ERROR);
@@ -32,7 +32,7 @@ int Tree_Dump (struct Node *root_ptr, const char *text_file_name, const char *im
     return NO_ERRORS;
 }
 
-static int Node_Dump (struct Node *node_ptr, FILE *graph_file, const char *var)
+static int Node_Dump (const struct Node *node_ptr, FILE *graph_file, const char *var)
 {
     MY_ASSERT (node_ptr,   "struct Node *node_ptr", NULL_PTR, ERROR);
     MY_ASSERT (graph_file, "FILE *graph_file",      NULL_PTR, ERROR);
@@ -98,7 +98,7 @@ static int Node_Dump (struct Node *node_ptr, FILE *graph_file, const char *var)
             break;
 
         default: 
-            printf ("%d\n", node_ptr->type);
+            printf ("node_ptr->type = %d\n", node_ptr->type);
             MY_ASSERT (false, "node_ptr->type", UNEXP_VAL, ERROR);
     }
 
@@ -111,7 +111,7 @@ static int Node_Dump (struct Node *node_ptr, FILE *graph_file, const char *var)
     return NO_ERRORS;
 }
 
-static int Arrows_Dump (struct Node *node_ptr, FILE *graph_file)
+static int Arrows_Dump (const struct Node *node_ptr, FILE *graph_file)
 {
     MY_ASSERT (node_ptr,   "struct Node *node_ptr", NULL_PTR, ERROR);
     MY_ASSERT (graph_file, "FILE *graph_file",      NULL_PTR, ERROR);
