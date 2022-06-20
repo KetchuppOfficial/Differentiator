@@ -5,7 +5,7 @@
 
 static struct Node **Forest_Ctor   (const int n_vars);
 static int           Forest_Dtor   (struct Node **forest, const int n_vars);
-static int           Dump_One_Tree (const struct Node *root, const char *var, const int n_vars);
+static int           Dump_One_Tree (const struct Node *func_root, const struct Node *der_root, const char *var, const int n_vars);
 static char        **Find_Vars     (const struct Node *node_ptr, int *n_vars);
 static int           Add_Vars      (const struct Node* node_ptr, char **vars_arr);
 static bool          Find_Name     (char **vars_arr, const char *var, const int n_vars);
@@ -57,8 +57,8 @@ int Differentiator (const struct Node *root)
     struct Node *root_copy = Copy_Tree (root, NULL);
     MY_ASSERT (root_copy, "Copy_Tree ()", FUNC_ERROR, ERROR);
     
-    int O1_status = Optimizer (&root_copy);
-    MY_ASSERT (O1_status != ERROR, "Optimizer ()", FUNC_ERROR, ERROR);
+    int O_status = Optimizer (&root_copy);
+    MY_ASSERT (O_status != ERROR, "Optimizer ()", FUNC_ERROR, ERROR);
     
     int n_vars = 0;
     char **vars_arr = Find_Vars (root_copy, &n_vars);
@@ -72,10 +72,10 @@ int Differentiator (const struct Node *root)
         int DOV_status = Diff_One_Var (root_copy, vars_arr[var_i], forest[var_i]);
         MY_ASSERT (DOV_status != ERROR, "Diff_One_Var ()", FUNC_ERROR, ERROR);
 
-        int O2_status = Optimizer (forest + var_i);
-        MY_ASSERT (O2_status != ERROR, "Optimizer ()", FUNC_ERROR, ERROR);
+        O_status = Optimizer (forest + var_i);
+        MY_ASSERT (O_status != ERROR, "Optimizer ()", FUNC_ERROR, ERROR);
 
-        int DOT_status = Dump_One_Tree (forest[var_i], vars_arr[var_i], n_vars);
+        int DOT_status = Dump_One_Tree (root_copy, forest[var_i], vars_arr[var_i], n_vars);
         MY_ASSERT (DOT_status != ERROR, "Dump_One_Tree ()", FUNC_ERROR, ERROR);
     }
 
@@ -130,38 +130,56 @@ static int Forest_Dtor (struct Node **forest, const int n_vars)
     return NO_ERRORS;
 }
 
-static int Dump_One_Tree (const struct Node *root, const char *var, const int n_vars)
+static int Dump_One_Tree (const struct Node *func_root, const struct Node *der_root, const char *var, const int n_vars)
 {
-    MY_ASSERT (root,       "struct Node *root", NULL_PTR, ERROR);
-    MY_ASSERT (var,        "const char *var",   NULL_PTR, ERROR);
-    MY_ASSERT (n_vars > 0, "const int n_vars",  POS_VAL,  ERROR);
+    MY_ASSERT (func_root,  "const struct Node *func_root", NULL_PTR, ERROR);
+    MY_ASSERT (der_root,   "const struct Node *der_root",  NULL_PTR, ERROR);
+    MY_ASSERT (var,        "const char *var",              NULL_PTR, ERROR);
+    MY_ASSERT (n_vars > 0, "const int n_vars",             POS_VAL,  ERROR);
     
-    const size_t buff_size = sizeof ("./Output/Partial_Derivative_Of_") + strlen (var) + sizeof (".dot");
+    const size_t var_len = strlen (var);
+    const size_t func_buff_size = sizeof ("./output/Function_Of_") + var_len + sizeof (".dot");
+    const size_t der_buff_size = sizeof ("./output/Partial_Derivative_Of_") + var_len + sizeof (".dot");
 
-    char *buffer_1 = (char *)calloc (buff_size, sizeof (char));
-    MY_ASSERT (buffer_1, "char *buffer_1", NE_MEM, ERROR);
+    char *func_buffer_1 = (char *)calloc (func_buff_size, sizeof (char));
+    MY_ASSERT (func_buffer_1, "char *func_buffer_1", NE_MEM, ERROR);
 
-    char *buffer_2 = (char *)calloc (buff_size, sizeof (char));
-    MY_ASSERT (buffer_2, "char *buffer_2", NE_MEM, ERROR);
+    char *func_buffer_2 = (char *)calloc (func_buff_size, sizeof (char));
+    MY_ASSERT (func_buffer_1, "char *func_buffer_2", NE_MEM, ERROR);
 
-    system ("mkdir -p ./Output");
+    char *der_buffer_1 = (char *)calloc (der_buff_size, sizeof (char));
+    MY_ASSERT (der_buffer_1, "char *buffer_1", NE_MEM, ERROR);
+
+    char *der_buffer_2 = (char *)calloc (der_buff_size, sizeof (char));
+    MY_ASSERT (der_buffer_2, "char *buffer_2", NE_MEM, ERROR);
+
+    system ("mkdir -p ./output");
 
     if (n_vars > 1)
     {
-        sprintf (buffer_1, "./Output/Partial_Derivative_Of_%s.dot", var);
-        sprintf (buffer_2, "./Output/Partial_Derivative_Of_%s.png", var);
+        sprintf (func_buffer_1, "./output/Function_Of_%s.dot", var);
+        sprintf (func_buffer_2, "./output/Function_Of_%s.png", var);
+        sprintf (der_buffer_1,  "./output/Partial_Derivative_Of_%s.dot", var);
+        sprintf (der_buffer_2,  "./output/Partial_Derivative_Of_%s.png", var);
     }
     else
     {
-        sprintf (buffer_1, "./Output/Derivative.dot");
-        sprintf (buffer_2, "./Output/Derivative.png");
+        sprintf (func_buffer_1, "./output/Function.dot");
+        sprintf (func_buffer_2, "./output/Function.png");
+        sprintf (der_buffer_1,  "./output/Derivative.dot");
+        sprintf (der_buffer_2,  "./output/Derivative.png");
     }
 
-    int TD_status = Tree_Dump (root, buffer_1, buffer_2, var);
+    int TD_status = Tree_Dump (func_root, func_buffer_1, func_buffer_2, var);
     MY_ASSERT (TD_status != ERROR, "Tree_Dump ()", FUNC_ERROR, ERROR);
 
-    free (buffer_1);
-    free (buffer_2);
+    TD_status = Tree_Dump (der_root, der_buffer_1, der_buffer_2, var);
+    MY_ASSERT (TD_status != ERROR, "Tree_Dump ()", FUNC_ERROR, ERROR);
+
+    free (func_buffer_1);
+    free (func_buffer_2);
+    free (der_buffer_1);
+    free (der_buffer_2);
 
     return NO_ERRORS;
 }
