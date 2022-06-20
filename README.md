@@ -33,7 +33,12 @@ git submodule init
 git submodule update
 ```
 
-**Step 3:** Build the project. 
+**Step 3:** Install Graphviz if it's not installed
+```bash
+sudo apt install graphviz
+```
+
+**Step 4:** Build the project. 
 ```bash
 username@machine:~/Differentiator$ make
 Collecting dependencies for "src/Differentiator.c"...
@@ -54,7 +59,7 @@ ar: creating My_Lib.a
 Linking project...
 ```
 
-**Step 4:** Running
+**Step 5:** Running
 ```bash
 make run IN=input_file_name
 ```
