@@ -46,6 +46,11 @@ static double Calc_Expression     (const struct Node *node_ptr);
 static bool   Check_If_Math_Sign  (const int node_type);
 static int    Compare_Double      (const double first, const double second);
 
+static int Dump_In_Tex        (const struct Node *orig_tree, struct Node **forest, char **vars_arr, const int n_vars);
+static int Formula_Dump       (const struct Node *node_ptr, FILE *tex_file);
+static int Print_Mult_Operand (const struct Node *node_ptr, FILE *tex_file);
+static int Print_Pow_Operand  (const struct Node *node_ptr, FILE *tex_file);
+
 // ======================================================================================================= //
 
 // ========================================== GENERAL FUNCTIONS ========================================== //
@@ -79,10 +84,8 @@ int Differentiator (const struct Node *root)
         MY_ASSERT (DOT_status != ERROR, "Dump_One_Tree ()", FUNC_ERROR, ERROR);
     }
 
-    #ifdef TEX
     int DIT_status = Dump_In_Tex (root_copy, forest, vars_arr, n_vars);
     MY_ASSERT (DIT_status != ERROR, "Dump_In_Tex ()", FUNC_ERROR, ERROR);
-    #endif
 
     for (int var_i = 0; var_i < n_vars; var_i++)
         free (vars_arr[var_i]);       
@@ -1478,6 +1481,289 @@ static int Compare_Double (const double first, const double second)
         return (first > second) ? GREATER : LESS;
     else
         return EQUAL;
+}
+
+// ======================================================================================================= //
+
+// ============================================== TeX DUMP =============================================== //
+
+static int Dump_In_Tex (const struct Node *orig_tree, struct Node **forest, char **vars_arr, const int n_vars)
+{
+    MY_ASSERT (orig_tree,  "const struct Node *orig_tree", NULL_PTR, ERROR);
+    MY_ASSERT (forest,     "const struct Node **forest",   NULL_PTR, ERROR);
+    MY_ASSERT (vars_arr,   "const char **vars_arr",        NULL_PTR, ERROR);
+    MY_ASSERT (n_vars > 0, "const int n_vars",             POS_VAL,  ERROR);
+
+    system ("mkdir -p output");
+    FILE *tex_file = Open_File ("./output/formulas.tex", "wb");
+
+    fprintf (tex_file, "\\documentclass{article}\n"
+                       "\\usepackage[utf8]{inputenc}\n\n"
+                       "\\begin{document}\n\n");
+
+    fprintf (tex_file, "\t\\[f(");
+    for (int i = 0; i < n_vars - 1; i++)
+        fprintf (tex_file, "%s, ", vars_arr[i]);
+    fprintf (tex_file, "%s) = ", vars_arr[n_vars - 1]);
+
+    Formula_Dump (orig_tree, tex_file);
+
+    fprintf (tex_file, "\\]\n\n");
+
+    for (int i = 0; i < n_vars; i++)
+    {
+        if (n_vars == 1)
+            fprintf (tex_file, "\t\\[f'(%s) = ", vars_arr[i]);
+        else
+            fprintf (tex_file, "\t\\( \\frac{\\partial f}{\\partial %s} = ", vars_arr[i]);
+
+        Formula_Dump (forest[i], tex_file);
+
+        fprintf (tex_file, "\\]\n");
+    }
+
+    fprintf (tex_file, "\n\\end{document}\n");
+
+    Close_File (tex_file, "./output/formulas.txt");
+
+    system ("pdflatex -output-directory=output ./output/formulas.tex");
+    system ("xdg-open ./output/formulas.pdf");
+
+    return NO_ERRORS;
+}
+
+static int Formula_Dump (const struct Node *node_ptr, FILE *tex_file)
+{
+    MY_ASSERT (node_ptr, "const struct Node *node_ptr", NULL_PTR, ERROR);
+    MY_ASSERT (tex_file, "FILE *tex_file",              NULL_PTR, ERROR);
+    
+    switch (node_ptr->type)
+    {
+        case NUMBER:
+            if (Compare_Double (node_ptr->value.num, 0.5) == EQUAL)
+                fprintf (tex_file, "\\frac{1}{2}");
+            else if (Compare_Double (node_ptr->value.num, -0.5) == EQUAL)
+                fprintf (tex_file, "\\frac{-1}{2}");
+            else
+                fprintf (tex_file, "%.f", node_ptr->value.num);
+            break;
+
+        case PI:
+            fprintf (tex_file, "\\pi");
+            break;
+
+        case E_NUM:
+            fprintf (tex_file, "e");
+            break;
+
+        case VARIABLE:
+            fprintf (tex_file, "%s", node_ptr->value.str);
+            break;
+
+        case SQRT:
+        case LN:
+        case SIN:
+        case COS:
+        case TAN:
+        case COT:
+        case ARCSIN:
+        case ARCCOS:
+        case ARCTAN:
+        case ARCCOT:
+        case SINH:
+        case COSH:
+        case TANH:
+        case COTH:
+
+            fprintf (tex_file, "\\%s", Functions_Data_Base[node_ptr->type].name);
+
+            fprintf (tex_file, "(");
+            Formula_Dump (node_ptr->left_son, tex_file);
+            fprintf (tex_file, ")");
+
+            break;
+
+        case PLUS:
+
+            Formula_Dump (node_ptr->left_son, tex_file);
+            fprintf (tex_file, " + ");
+            Formula_Dump (node_ptr->right_son, tex_file);
+
+            break;
+
+        case MINUS:
+
+            Formula_Dump (node_ptr->left_son, tex_file);
+            fprintf (tex_file, " - ");
+            Formula_Dump (node_ptr->right_son, tex_file);
+
+            break;
+
+        case MULT:
+            Print_Mult_Operand (node_ptr->left_son, tex_file);
+            fprintf (tex_file, " \\cdot ");
+            Print_Mult_Operand (node_ptr->right_son, tex_file);
+            break;
+
+        case POW:
+
+            Print_Pow_Operand (node_ptr->left_son, tex_file);
+            fprintf (tex_file, "^");
+            Print_Pow_Operand (node_ptr->right_son, tex_file);
+
+            break;
+
+        case DIV:
+
+            fprintf (tex_file, "\\frac");
+
+            fprintf (tex_file, "{");
+            Formula_Dump (node_ptr->left_son, tex_file);
+            fprintf (tex_file, "}");
+
+            fprintf (tex_file, "{");
+            Formula_Dump (node_ptr->right_son, tex_file);
+            fprintf (tex_file, "}");
+
+            break;
+
+        default: MY_ASSERT (false, "node_ptr->type", UNEXP_VAL, ERROR);
+    }
+
+    return NO_ERRORS;
+}
+
+static int Print_Mult_Operand (const struct Node *node_ptr, FILE *tex_file)
+{
+    MY_ASSERT (node_ptr, "const struct Node *node_ptr", NULL_PTR, ERROR);
+    MY_ASSERT (tex_file, "FILE *tex_file",              NULL_PTR, ERROR);
+
+    switch (node_ptr->type)
+    {
+        case NUMBER:
+
+            if (node_ptr->value.num < 0)
+            {
+                fprintf (tex_file, "(");
+                Formula_Dump (node_ptr, tex_file);
+                fprintf (tex_file, ")");
+            }
+            else
+                Formula_Dump (node_ptr, tex_file);
+
+            break;
+
+        case PI:
+        case E_NUM:
+
+        case VARIABLE:
+
+        case SQRT:
+        case LN:
+        case SIN:
+        case COS:
+        case TAN:
+        case COT:
+        case ARCSIN:
+        case ARCCOS:
+        case ARCTAN:
+        case ARCCOT:
+        case SINH:
+        case COSH:
+        case TANH:
+        case COTH:
+
+        case MULT:
+        case DIV:
+        case POW:
+
+            Formula_Dump (node_ptr, tex_file);
+            break;
+
+        case PLUS:
+        case MINUS:
+
+            fprintf (tex_file, "(");
+            Formula_Dump (node_ptr, tex_file);
+            fprintf (tex_file, ")");
+
+            break;
+            
+        default:
+            MY_ASSERT (false, "node_ptr->type", UNEXP_VAL, ERROR);
+    }
+
+    return NO_ERRORS;
+}
+
+static int Print_Pow_Operand (const struct Node *node_ptr, FILE *tex_file)
+{
+    MY_ASSERT (node_ptr, "const struct Node *node_ptr", NULL_PTR, ERROR);
+    MY_ASSERT (tex_file, "FILE *tex_file",              NULL_PTR, ERROR);
+    
+    fprintf (tex_file, "{");
+
+    switch (node_ptr->type)
+    {
+        case NUMBER:
+            if (node_ptr->value.num < 0)
+            {
+                fprintf (tex_file, "(");
+                Formula_Dump (node_ptr, tex_file);
+                fprintf (tex_file, ")");
+            }
+            else
+                Formula_Dump (node_ptr, tex_file);
+            break;
+
+        case PI:
+        case E_NUM:
+
+        case VARIABLE:
+
+        case SQRT:
+        case LN:
+        case SIN:
+        case COS:
+        case TAN:
+        case COT:
+        case ARCSIN:
+        case ARCCOS:
+        case ARCTAN:
+        case ARCCOT:
+        case SINH:
+        case COSH:
+        case TANH:
+        case COTH:
+            Formula_Dump (node_ptr, tex_file);
+            break;
+
+        case PLUS:
+        case MINUS:
+        case MULT:
+        case DIV:
+        case POW:
+
+            if ((node_ptr->parent->left_son  == node_ptr && node_ptr->left_son->type  == POW) ||
+                (node_ptr->parent->right_son == node_ptr && node_ptr->right_son->type == POW))
+            {
+                Formula_Dump (node_ptr, tex_file);
+            }
+            else
+            {
+                fprintf (tex_file, "(");
+                Formula_Dump (node_ptr, tex_file);
+                fprintf (tex_file, ")");
+            }
+            break;
+            
+        default:
+            MY_ASSERT (false, "node_ptr->type", UNEXP_VAL, ERROR);
+    }
+
+    fprintf (tex_file, "}");
+
+    return NO_ERRORS;
 }
 
 // ======================================================================================================= //
