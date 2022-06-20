@@ -45,7 +45,8 @@ $(BUILDDIR)%.d: $(SRCDIR)%.c
 .PHONY: run clean
 
 clean:
-	rm -rf $(OBJ) $(DEPS)
+	@echo "Cleaning service files..."
+	@rm -rf $(OBJ) $(DEPS)
 
 run: $(BIN)$(PROJECT).out
 	@echo "Running \"$<\"..."
