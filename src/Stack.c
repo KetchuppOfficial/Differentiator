@@ -389,7 +389,7 @@ int Stack_Dump (struct Stack *stack_ptr, FILE *output)
     for (int index = 0; index < (stack_ptr->capacity); index++)
         DATA_OUTPUT (index, (stack_ptr->data)[index], output);
     #if SECURITY_LEVEL == 1 || SECURITY_LEVEL == 2
-    fprintf (output, "RIGHT DATA CANARY: %lX\n", *((canary_t *)((char*)stack_ptr->data + stack_ptr->capacity)));
+    fprintf (output, "RIGHT DATA CANARY: %lX\n", *((canary_t *)((char*)stack_ptr->data + stack_ptr->capacity * ELEM_SZ)));
     #endif
     fprintf (output, "SIZE: %ld\n",     stack_ptr->size);
     fprintf (output, "CAPACITY: %ld\n", stack_ptr->capacity);
