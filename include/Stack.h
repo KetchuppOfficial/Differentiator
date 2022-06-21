@@ -61,12 +61,12 @@
 
 struct Stack;
 
-struct Stack *Stack_Ctor (void);
-int Stack_Dtor (struct Stack *stack_ptr);
-int Stack_Push (struct Stack *stack_ptr, const ELEM_T value);
-int Stack_Pop  (struct Stack *stack_ptr, ELEM_T *value_ptr);
-int Stack_Dump (struct Stack *stack_ptr, FILE *output);
-long Get_Stack_Size (const struct Stack *stack_ptr);
-ELEM_T Stack_Top_Elem (const struct Stack *stack_ptr);
+struct Stack *Stack_Ctor     (void);
+int           Stack_Dtor     (struct Stack *stack_ptr);
+int           Stack_Push     (struct Stack *stack_ptr, const ELEM_T value);
+int           Stack_Pop      (struct Stack *stack_ptr, ELEM_T *value_ptr);
+int           Stack_Dump     (struct Stack *stack_ptr, FILE *output);
+long          Get_Stack_Size (const struct Stack *stack_ptr);
+ELEM_T        Stack_Top_Elem (const struct Stack *stack_ptr);
 
-#endif // STACK_H_INCLUDED
+#endif
