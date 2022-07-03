@@ -8,8 +8,6 @@
 #include <ctype.h>
 #include <math.h>
 
-#include "../include/Stack.h"
-
 #define MAX_NAME_SIZE 10
 
 enum Types
@@ -45,27 +43,6 @@ enum Types
     R_PARANTHESIS,
 };
 
-union Value
-{
-    double num;
-    char   str[MAX_NAME_SIZE];
-};
-
-struct Token
-{
-    enum Types  type;
-    union Value value;
-};
-
-struct Node
-{
-    enum   Types type;
-    union  Value value;
-    struct Node *left_son;
-    struct Node *right_son;
-    struct Node *parent;
-};
-
 struct Function
 {
     enum Types num;
@@ -95,8 +72,22 @@ static const struct Function Functions_Data_Base[] =
     {-1, ""}
 };
 
-struct Token *Lexer           (const char *buffer, const long n_symbs, int *n_tokens); 
-struct Node  *Parser          (const struct Token *token_arr, const int n_tokens);
+union Value
+{
+    double num;
+    char   str[MAX_NAME_SIZE];
+};
+
+struct Node
+{
+    enum   Types type;
+    union  Value value;
+    struct Node *left_son;
+    struct Node *right_son;
+    struct Node *parent;
+};
+
+struct Node  *Plant_Tree      (const char *buffer, const long n_symbs);
 int           Tree_Destructor (struct Node *node_ptr);
 struct Node **Differentiator  (const struct Node *root, int *n_vars);
 int           Forest_Dtor     (struct Node **forest, const int n_vars);
