@@ -14,22 +14,19 @@ static int    Lexer_Dump     (const struct Token *token_arr, const int n_tokens)
 
 // ========================================================================================== //
 
-struct Token *Lexer (const char *file_name, int *n_tokens)
+struct Token *Lexer (const char *buffer, const long n_symbs, int *n_tokens)
 {
-    MY_ASSERT (file_name, "const char *file_name", NULL_PTR, NULL);
-    MY_ASSERT (n_tokens,  "int *n_tokens",         NULL_PTR, NULL);
-    
-    long n_symbs = 0L;
-    char *buffer = Make_File_Buffer (file_name, &n_symbs);
-    MY_ASSERT (buffer, "Make_File_Buffer ()", FUNC_ERROR, NULL);
+    MY_ASSERT (buffer,   "const char *buffer", NULL_PTR, NULL);
+    MY_ASSERT (n_tokens, "int *n_tokens",      NULL_PTR, NULL);
 
     struct Token *token_arr = (struct Token *)calloc (n_symbs, sizeof (struct Token));
     MY_ASSERT (token_arr, "struct Token *token_arr", NE_MEM, NULL);
 
     *n_tokens = Lexer_ (buffer, n_symbs, token_arr);
-    free (buffer);
     if (*n_tokens == ERROR)
         MY_ASSERT (false, "Lexer_ ()", FUNC_ERROR, NULL);
+
+    free (buffer);
 
     #ifdef LEXER_DEBUG
     Lexer_Dump (token_arr, *n_tokens);

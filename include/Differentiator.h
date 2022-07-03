@@ -95,7 +95,7 @@ static const struct Function Functions_Data_Base[] =
     {-1, ""}
 };
 
-struct Token *Lexer           (const char *file_name, int *n_tokens);
+struct Token *Lexer           (const char *buffer, const long n_symbs, int *n_tokens); 
 struct Node  *Parser          (const struct Token *token_arr, const int n_tokens);
 int           Tree_Destructor (struct Node *node_ptr);
 int           Differentiator  (const struct Node *root);
