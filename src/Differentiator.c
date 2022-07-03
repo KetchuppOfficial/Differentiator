@@ -1341,8 +1341,8 @@ static int Simplify (struct Node **node_ptr_ptr)
 
             change_i++;
         }
-        else if (LT == NUMBER && ((TP == MULT && Compare_Double (L_VAL.num, 1.0) == EQUAL) ||   // 1 * f(x) = f(x)
-                                  (TP == PLUS && Compare_Double (L_VAL.num, 0.0) == EQUAL)))    // 0 + f(x) = f(x)
+        else if (LT == NUMBER && ((TP == MULT && Compare_Double (L_VAL.num, 1.0) == EQUAL) ||   // 1 * f(x) ---> f(x)
+                                  (TP == PLUS && Compare_Double (L_VAL.num, 0.0) == EQUAL)))    // 0 + f(x) ---> f(x)
         {
             Delete_Neutral_Elem (node_ptr_ptr, R);
             node_ptr->right_son = NULL;
@@ -1350,9 +1350,9 @@ static int Simplify (struct Node **node_ptr_ptr)
             node_ptr = *node_ptr_ptr;
             change_i++;
         }
-        else if (RT == NUMBER && (((TP == MULT || TP == DIV)   && Compare_Double (R_VAL.num, 1.0) == EQUAL) ||  // f(x) * 1 = f(x) or f(x) / 1 = f(x) 
-                                  ((TP == PLUS || TP == MINUS) && Compare_Double (R_VAL.num, 0.0) == EQUAL) ||  // f(x) + 0 = f(x) or f(x) - 0 = f(x)
-                                  ( TP == POW                  && Compare_Double (R_VAL.num, 1.0) == EQUAL)))   // f(x) ^ 1 = f(x)
+        else if (RT == NUMBER && (((TP == MULT || TP == DIV)   && Compare_Double (R_VAL.num, 1.0) == EQUAL) ||  // f(x) * 1 ---> f(x) or f(x) / 1 ---> f(x) 
+                                  ((TP == PLUS || TP == MINUS) && Compare_Double (R_VAL.num, 0.0) == EQUAL) ||  // f(x) + 0 ---> f(x) or f(x) - 0 ---> f(x)
+                                  ( TP == POW                  && Compare_Double (R_VAL.num, 1.0) == EQUAL)))   // f(x) ^ 1 ---> f(x)
         {
             Delete_Neutral_Elem (node_ptr_ptr, L);
             node_ptr->left_son = NULL;
@@ -1360,21 +1360,26 @@ static int Simplify (struct Node **node_ptr_ptr)
             node_ptr = *node_ptr_ptr;
             change_i++;
         }
-        else if ((LT == NUMBER && (TP == MULT || TP == DIV) && Compare_Double (L_VAL.num, 0.0) == EQUAL) || // 0 * f(x) = 0 or 0 / f(x) = 0
-                 (RT == NUMBER &&  TP == MULT               && Compare_Double (R_VAL.num, 0.0) == EQUAL))   // f(x) * 0 = 0
+        else if (((TP == MULT || TP == DIV) && LT == NUMBER && Compare_Double (L_VAL.num, 0.0) == EQUAL) || // 0 * f(x) ---> 0 or 0 / f(x) ---> 0
+                 (               TP == MULT && RT == NUMBER && Compare_Double (R_VAL.num, 0.0) == EQUAL))   // f(x) * 0 ---> 0
         {
             Turn_Into_Num (node_ptr, 0.0);
             change_i++;
         }
-        else if (RT == NUMBER && TP == DIV && Compare_Double (R_VAL.num, 0.0) == EQUAL)     // f(x) / 0 = ERROR
+        else if (TP == DIV && RT == NUMBER && Compare_Double (R_VAL.num, 0.0) == EQUAL)     // f(x) / 0 ---> ERROR
         {
             MY_ASSERT (false, "Right operand of expression", UNEXP_ZERO, ERROR);
         }
-        else if ((LT == NUMBER && TP == POW && Compare_Double (L_VAL.num, 1.0) == EQUAL) || // 1 ^ f(x) = 1
-                 (RT == NUMBER && TP == POW && Compare_Double (R_VAL.num, 0.0) == EQUAL))   // f(x) ^ 0 = 1
+        else if ((TP == POW && LT == NUMBER && Compare_Double (L_VAL.num, 1.0) == EQUAL) || // 1 ^ f(x) ---> 1
+                 (TP == POW && RT == NUMBER && Compare_Double (R_VAL.num, 0.0) == EQUAL))   // f(x) ^ 0 ---> 1
         {
             Turn_Into_Num (node_ptr, 1.0);
             change_i++;
+        }
+        else if (TP == MINUS && LT == NUMBER && Compare_Double (L_VAL.num, 0.0) == EQUAL)   // 0 - f (x) ---> (-1) * f(x) 
+        {
+            TP = MULT;
+            L_VAL.num = -1;
         }
 
         if (L)
