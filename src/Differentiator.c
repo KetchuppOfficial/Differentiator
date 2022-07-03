@@ -1515,7 +1515,7 @@ static int Dump_In_Tex (const struct Node *orig_tree, struct Node **forest, char
         if (n_vars == 1)
             fprintf (tex_file, "\t\\[f'(%s) = ", vars_arr[i]);
         else
-            fprintf (tex_file, "\t\\( \\frac{\\partial f}{\\partial %s} = ", vars_arr[i]);
+            fprintf (tex_file, "\t\\[\\frac{\\partial f}{\\partial %s} = ", vars_arr[i]);
 
         Formula_Dump (forest[i], tex_file);
 
@@ -1561,6 +1561,14 @@ static int Formula_Dump (const struct Node *node_ptr, FILE *tex_file)
             break;
 
         case SQRT:
+            fprintf (tex_file, "\\%s", Functions_Data_Base[node_ptr->type].name);
+
+            fprintf (tex_file, "{");
+            Formula_Dump (node_ptr->left_son, tex_file);
+            fprintf (tex_file, "}");
+
+            break;
+
         case LN:
         case SIN:
         case COS:
@@ -1644,9 +1652,9 @@ static int Print_Mult_Operand (const struct Node *node_ptr, FILE *tex_file)
 
             if (node_ptr->value.num < 0)
             {
-                fprintf (tex_file, "(");
+                fprintf (tex_file, "\\left(");
                 Formula_Dump (node_ptr, tex_file);
-                fprintf (tex_file, ")");
+                fprintf (tex_file, "\\right)");
             }
             else
                 Formula_Dump (node_ptr, tex_file);
@@ -1683,9 +1691,9 @@ static int Print_Mult_Operand (const struct Node *node_ptr, FILE *tex_file)
         case PLUS:
         case MINUS:
 
-            fprintf (tex_file, "(");
+            fprintf (tex_file, "\\left(");
             Formula_Dump (node_ptr, tex_file);
-            fprintf (tex_file, ")");
+            fprintf (tex_file, "\\right)");
 
             break;
             
@@ -1708,12 +1716,13 @@ static int Print_Pow_Operand (const struct Node *node_ptr, FILE *tex_file)
         case NUMBER:
             if (node_ptr->value.num < 0)
             {
-                fprintf (tex_file, "(");
+                fprintf (tex_file, "\\left(");
                 Formula_Dump (node_ptr, tex_file);
-                fprintf (tex_file, ")");
+                fprintf (tex_file, "\\right)");
             }
             else
                 Formula_Dump (node_ptr, tex_file);
+                
             break;
 
         case PI:
@@ -1735,26 +1744,12 @@ static int Print_Pow_Operand (const struct Node *node_ptr, FILE *tex_file)
         case COSH:
         case TANH:
         case COTH:
-            Formula_Dump (node_ptr, tex_file);
-            break;
-
         case PLUS:
         case MINUS:
         case MULT:
         case DIV:
         case POW:
-
-            if ((node_ptr->parent->left_son  == node_ptr && node_ptr->left_son->type  == POW) ||
-                (node_ptr->parent->right_son == node_ptr && node_ptr->right_son->type == POW))
-            {
-                Formula_Dump (node_ptr, tex_file);
-            }
-            else
-            {
-                fprintf (tex_file, "(");
-                Formula_Dump (node_ptr, tex_file);
-                fprintf (tex_file, ")");
-            }
+            Formula_Dump (node_ptr, tex_file);
             break;
             
         default:
