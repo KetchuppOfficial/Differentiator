@@ -8,8 +8,8 @@ static int  Get_Number     (const char *str, int *symb_i, double *num_ptr);
 static void Show_Error     (const char *str, const int symb_i);
 static int  Check_Function (const char *func_name);
 
-#ifdef LEXER_DEBUG
-static int    Lexer_Dump     (const struct Token *token_arr, const int n_tokens);
+#ifdef LEXER_DUMP
+static int Lexer_Dump (const struct Token *token_arr, const int n_tokens);
 #endif
 
 // ========================================================================================== //
@@ -28,7 +28,7 @@ struct Token *Lexer (const char *buffer, const long n_symbs, int *n_tokens)
 
     free (buffer);
 
-    #ifdef LEXER_DEBUG
+    #ifdef LEXER_DUMP
     Lexer_Dump (token_arr, *n_tokens);
     #endif
 
@@ -222,7 +222,7 @@ static int Check_Function (const char *func_name)
     return ERROR;
 }
 
-#ifdef LEXER_DEBUG
+#ifdef LEXER_DUMP
 static int Lexer_Dump (const struct Token *token_arr, const int n_tokens)
 {
     for (int token_i = 0; token_i < n_tokens; token_i++)
