@@ -26,8 +26,6 @@ struct Token *Lexer (const char *buffer, const long n_symbs, int *n_tokens)
     if (*n_tokens == ERROR)
         MY_ASSERT (false, "Lexer_ ()", FUNC_ERROR, NULL);
 
-    free (buffer);
-
     #ifdef LEXER_DUMP
     Lexer_Dump (token_arr, *n_tokens);
     #endif
