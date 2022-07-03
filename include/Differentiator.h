@@ -98,7 +98,8 @@ static const struct Function Functions_Data_Base[] =
 struct Token *Lexer           (const char *buffer, const long n_symbs, int *n_tokens); 
 struct Node  *Parser          (const struct Token *token_arr, const int n_tokens);
 int           Tree_Destructor (struct Node *node_ptr);
-int           Differentiator  (const struct Node *root);
+struct Node **Differentiator  (const struct Node *root, int *n_vars);
+int           Forest_Dtor     (struct Node **forest, const int n_vars);
 int           Tree_Dump       (const struct Node *root_ptr, const char *text_file_name, const char *image_file_name, const char *var);
 
 #endif
