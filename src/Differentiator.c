@@ -3,15 +3,14 @@
 
 // ========================================== STATIC PROTOTYPES ========================================== //
 
-static struct Node **Forest_Ctor (const int n_vars);
+static struct Var *Find_Vars (const struct Node *node_ptr, int *n_vars);
 
 #ifdef GRAPHIC_DUMP
 static int Dump_One_Tree (const struct Node *func_root, const struct Node *der_root, const char *var, const int n_vars);
 #endif
 
-static char **Find_Vars (const struct Node *node_ptr, int *n_vars);
-static int    Add_Vars  (const struct Node* node_ptr, char **vars_arr);
-static bool   Find_Name (char **vars_arr, const char *var, const int n_vars);
+static int  Add_Vars  (const struct Node* node_ptr, struct Var *vars_arr);
+static bool Find_Name (struct Var *vars_arr, const char *var, const int n_vars);
 
 static int          Diff_One_Var         (const struct Node *node_ptr, const char *var, struct Node *new_node_ptr);
 static struct Node *Differentiate_Inside (struct Node *what_diff, struct Node *parent, const char *var);
@@ -49,7 +48,7 @@ static bool   Check_If_Math_Sign  (const int node_type);
 static int    Compare_Double      (const double first, const double second);
 
 #ifdef TEX_DUMP
-static int Dump_In_Tex        (const struct Node *orig_tree, struct Node **forest, char **vars_arr, const int n_vars);
+static int Dump_In_Tex        (const struct Node *orig_tree, struct Forest *forest);
 static int Formula_Dump       (const struct Node *node_ptr, FILE *tex_file);
 static int Print_Mult_Operand (const struct Node *node_ptr, FILE *tex_file);
 static int Print_Pow_Operand  (const struct Node *node_ptr, FILE *tex_file);
@@ -59,84 +58,132 @@ static int Print_Pow_Operand  (const struct Node *node_ptr, FILE *tex_file);
 
 // ========================================== GENERAL FUNCTIONS ========================================== //
 
-struct Node **Differentiator (const struct Node *root, int *n_vars)
+int Differentiator (const struct Node *root, struct Forest *forest)
 {
-    MY_ASSERT (root,   "struct Node *root", NULL_PTR, NULL);
-    MY_ASSERT (n_vars, "int *n_vars",       NULL_PTR, NULL);
+    MY_ASSERT (root,   "struct Node *root",     NULL_PTR, ERROR);
+    MY_ASSERT (forest, "struct Forest *forest", NULL_PTR, ERROR);
 
     struct Node *root_copy = Copy_Tree (root, NULL);
-    MY_ASSERT (root_copy, "Copy_Tree ()", FUNC_ERROR, NULL);
+    MY_ASSERT (root_copy, "Copy_Tree ()", FUNC_ERROR, ERROR);
     
     int O_status = Optimizer (&root_copy);
-    MY_ASSERT (O_status != ERROR, "Optimizer ()", FUNC_ERROR, NULL);
-    
-    *n_vars = 0;
-    char **vars_arr = Find_Vars (root_copy, n_vars);
-    MY_ASSERT (vars_arr, "Find_Vars ()", FUNC_ERROR, NULL);
+    MY_ASSERT (O_status != ERROR, "Optimizer ()", FUNC_ERROR, ERROR);
 
-    struct Node **forest = Forest_Ctor (*n_vars);
-    MY_ASSERT (forest, "Forest_Ctor ()", FUNC_ERROR, NULL);
-
-    for (int var_i = 0; var_i < *n_vars; var_i++)
+    for (int var_i = 0; var_i < forest->n_vars; var_i++)
     {
-        int DOV_status = Diff_One_Var (root_copy, vars_arr[var_i], forest[var_i]);
-        MY_ASSERT (DOV_status != ERROR, "Diff_One_Var ()", FUNC_ERROR, NULL);
+        int DOV_status = Diff_One_Var (root_copy, forest->vars_arr[var_i].name, forest->tree_arr[var_i]);
+        MY_ASSERT (DOV_status != ERROR, "Diff_One_Var ()", FUNC_ERROR, ERROR);
 
-        O_status = Optimizer (forest + var_i);
-        MY_ASSERT (O_status != ERROR, "Optimizer ()", FUNC_ERROR, NULL);
+        O_status = Optimizer (&forest->tree_arr[var_i]);
+        MY_ASSERT (O_status != ERROR, "Optimizer ()", FUNC_ERROR, ERROR);
 
         #ifdef GRAPHIC_DUMP
-        int DOT_status = Dump_One_Tree (root_copy, forest[var_i], vars_arr[var_i], *n_vars);
-        MY_ASSERT (DOT_status != ERROR, "Dump_One_Tree ()", FUNC_ERROR, NULL);
+        int DOT_status = Dump_One_Tree (root_copy, forest->tree_arr[var_i], forest->vars_arr[var_i].name, forest->n_vars);
+        MY_ASSERT (DOT_status != ERROR, "Dump_One_Tree ()", FUNC_ERROR, ERROR);
         #endif
     }
 
     #ifdef TEX_DUMP
-    int DIT_status = Dump_In_Tex (root_copy, forest, vars_arr, *n_vars);
-    MY_ASSERT (DIT_status != ERROR, "Dump_In_Tex ()", FUNC_ERROR, NULL);
+    int DIT_status = Dump_In_Tex (root_copy, forest);
+    MY_ASSERT (DIT_status != ERROR, "Dump_In_Tex ()", FUNC_ERROR, ERROR);
     #endif
 
     int TD_status = Tree_Destructor (root_copy);
-    MY_ASSERT (TD_status != ERROR, "Tree_Destructor ()", FUNC_ERROR, NULL);
-    
-    for (int var_i = 0; var_i < *n_vars; var_i++)
-        free (vars_arr[var_i]);
+    MY_ASSERT (TD_status != ERROR, "Tree_Destructor ()", FUNC_ERROR, ERROR);
 
-    free (vars_arr);
-
-    return forest;
+    return NO_ERRORS;
 }
 
-static struct Node **Forest_Ctor (const int n_vars)
+struct Forest *Forest_Ctor (const struct Node *root)
 {
-    MY_ASSERT (n_vars > 0, "const int n_vars", POS_VAL, NULL);
-    
-    struct Node **forest = (struct Node **)calloc (n_vars, sizeof (struct Node *));
+    MY_ASSERT (root, "const struct Node *root", NULL_PTR, NULL);
+
+    struct Forest *forest = (struct Forest *)calloc (1, sizeof (struct Forest));
+    MY_ASSERT (forest, "struct Forest *forest", NE_MEM, NULL);
+
+    forest->vars_arr = Find_Vars (root, &forest->n_vars);
+    MY_ASSERT (forest->vars_arr, "Find_Vars ()", FUNC_ERROR, NULL);
+
+    forest->tree_arr = (struct Node **)calloc (forest->n_vars, sizeof (struct Node *));
     MY_ASSERT (forest, "struct Node **forest", NE_MEM, NULL);
 
-    for (int var_i = 0; var_i < n_vars; var_i++)
+    for (int var_i = 0; var_i < forest->n_vars; var_i++)
     {
-        forest[var_i] = (struct Node *)calloc (1, sizeof  (struct Node));
-        MY_ASSERT (forest[var_i], "tree_arr[var_i]", NE_MEM, NULL);
+        forest->tree_arr[var_i] = (struct Node *)calloc (1, sizeof  (struct Node));
+        MY_ASSERT (forest->tree_arr[var_i], "forest->tree_arr[var_i]", NE_MEM, NULL);
     }
 
     return forest;
 }
 
-int Forest_Dtor (struct Node **forest, const int n_vars)
+int Forest_Dtor (struct Forest *forest)
 {
-    MY_ASSERT (forest,     "struct Node **forest", NULL_PTR, ERROR);
-    MY_ASSERT (n_vars > 0, "const int n_vars",     POS_VAL,  ERROR);
+    MY_ASSERT (forest, "struct Forest *forest", NULL_PTR, ERROR);
     
-    for (int i = 0; i < n_vars; i++)
+    for (int var_i = 0; var_i < forest->n_vars; var_i++)
     {
-        int TD_status = Tree_Destructor (forest[i]);
+        int TD_status = Tree_Destructor (forest->tree_arr[var_i]);
         MY_ASSERT (TD_status != ERROR, "Tree_Destructor ()", FUNC_ERROR, ERROR);
+
+        free (forest->vars_arr[var_i].name);
     } 
+
+    free (forest->vars_arr);
+    free (forest->tree_arr);
 
     free (forest);
 
     return NO_ERRORS;
+}
+
+const int MAX_N_VARS = 50;
+
+static struct Var *Find_Vars (const struct Node *node_ptr, int *n_vars)
+{
+    MY_ASSERT (node_ptr, "struct Node *node_ptr", NULL_PTR, NULL);
+
+    struct Var *vars_arr = (struct Var *)calloc (MAX_N_VARS, sizeof (struct Var));
+    MY_ASSERT (vars_arr, "vars_arr", NE_MEM, NULL);
+
+    *n_vars = Add_Vars (node_ptr, vars_arr);
+    MY_ASSERT (*n_vars != ERROR, "Add_Vars ()", FUNC_ERROR, NULL);
+
+    return vars_arr;
+}
+
+static int Add_Vars (const struct Node* node_ptr, struct Var *vars_arr)
+{
+    MY_ASSERT (node_ptr, "struct Node *node_ptr", NULL_PTR, ERROR);
+    MY_ASSERT (vars_arr, "struct Var *vars_arr",  NULL_PTR, ERROR);
+    
+    static int var_i = 0;
+    
+    if (node_ptr->type == VARIABLE && Find_Name (vars_arr, node_ptr->value.str, var_i) == false)
+    {
+        size_t str_len = strlen (node_ptr->value.str);
+        vars_arr[var_i].name = (char *)calloc (str_len, sizeof (char));
+        MY_ASSERT (vars_arr[var_i].name, "vars_arr[var_i]", NE_MEM, ERROR);
+
+        memcpy (vars_arr[var_i].name, node_ptr->value.str, str_len);
+        var_i++;
+    }
+
+    if (node_ptr->left_son)
+        Add_Vars (node_ptr->left_son, vars_arr);
+
+    if (node_ptr->right_son)
+        Add_Vars (node_ptr->right_son, vars_arr);
+
+    return var_i;
+}
+
+static bool Find_Name (struct Var *vars_arr, const char *var, const int n_vars)
+{   
+    for (int var_i = 0; var_i < n_vars; var_i++)
+        if (strncmp (var, vars_arr[var_i].name, strlen (vars_arr[var_i].name)) == 0)
+            return true;
+
+    return false;
 }
 
 #ifdef GRAPHIC_DUMP
@@ -194,57 +241,6 @@ static int Dump_One_Tree (const struct Node *func_root, const struct Node *der_r
     return NO_ERRORS;
 }
 #endif
-
-#define MAX_N_VARS 50
-
-static char **Find_Vars (const struct Node *node_ptr, int *n_vars)
-{
-    MY_ASSERT (node_ptr, "struct Node *node_ptr", NULL_PTR, NULL);
-    MY_ASSERT (n_vars,   "int *n_vars",           NULL_PTR, NULL);
-    
-    char **vars_arr = (char **)calloc (MAX_N_VARS, sizeof (char *));
-    MY_ASSERT (vars_arr, "char *vars_arr", NE_MEM, NULL);
-
-    *n_vars = Add_Vars (node_ptr, vars_arr);
-    MY_ASSERT (*n_vars != ERROR, "Add_Vars ()", FUNC_ERROR, NULL);
-
-    return vars_arr;
-}
-
-static int Add_Vars (const struct Node* node_ptr, char **vars_arr)
-{
-    MY_ASSERT (node_ptr, "struct Node *node_ptr", NULL_PTR, ERROR);
-    MY_ASSERT (vars_arr, "char **vars_arr",       NULL_PTR, ERROR);
-    
-    static int var_i = 0;
-    
-    if (node_ptr->type == VARIABLE && Find_Name (vars_arr, node_ptr->value.str, var_i) == false)
-    {
-        size_t str_len = strlen (node_ptr->value.str);
-        vars_arr[var_i] = (char *)calloc (str_len, sizeof (char));
-        MY_ASSERT (vars_arr[var_i], "vars_arr[var_i]", NE_MEM, ERROR);
-
-        memcpy (vars_arr[var_i], node_ptr->value.str, str_len);
-        var_i++;
-    }
-
-    if (node_ptr->left_son)
-        Add_Vars (node_ptr->left_son, vars_arr);
-
-    if (node_ptr->right_son)
-        Add_Vars (node_ptr->right_son, vars_arr);
-
-    return var_i;
-}
-
-static bool Find_Name (char **vars_arr, const char *var, const int n_vars)
-{   
-    for (int var_i = 0; var_i < n_vars; var_i++)
-        if (strcmp (vars_arr[var_i], var) == 0)
-            return true;
-
-    return false;
-}
 // ======================================================================================================= //
 
 // =========================================== DIFFERENTIATION =========================================== //
@@ -1501,12 +1497,10 @@ static int Compare_Double (const double first, const double second)
 // ============================================== TeX DUMP =============================================== //
 
 #ifdef TEX_DUMP
-static int Dump_In_Tex (const struct Node *orig_tree, struct Node **forest, char **vars_arr, const int n_vars)
+static int Dump_In_Tex (const struct Node *orig_tree, struct Forest *forest)
 {
     MY_ASSERT (orig_tree,  "const struct Node *orig_tree", NULL_PTR, ERROR);
-    MY_ASSERT (forest,     "const struct Node **forest",   NULL_PTR, ERROR);
-    MY_ASSERT (vars_arr,   "const char **vars_arr",        NULL_PTR, ERROR);
-    MY_ASSERT (n_vars > 0, "const int n_vars",             POS_VAL,  ERROR);
+    MY_ASSERT (forest,     "const struct Forest *forest",  NULL_PTR, ERROR);
 
     system ("mkdir -p output");
     FILE *tex_file = Open_File ("./output/formulas.tex", "wb");
@@ -1516,22 +1510,22 @@ static int Dump_In_Tex (const struct Node *orig_tree, struct Node **forest, char
                        "\\begin{document}\n\n");
 
     fprintf (tex_file, "\t\\[f(");
-    for (int i = 0; i < n_vars - 1; i++)
-        fprintf (tex_file, "%s, ", vars_arr[i]);
-    fprintf (tex_file, "%s) = ", vars_arr[n_vars - 1]);
+    for (int var_i = 0; var_i < forest->n_vars - 1; var_i++)
+        fprintf (tex_file, "%s, ", forest->vars_arr[var_i].name);
+    fprintf (tex_file, "%s) = ", forest->vars_arr[forest->n_vars - 1].name);
 
     Formula_Dump (orig_tree, tex_file);
 
     fprintf (tex_file, "\\]\n\n");
 
-    for (int i = 0; i < n_vars; i++)
+    for (int var_i = 0; var_i < forest->n_vars; var_i++)
     {
-        if (n_vars == 1)
-            fprintf (tex_file, "\t\\[f'(%s) = ", vars_arr[i]);
+        if (forest->n_vars == 1)
+            fprintf (tex_file, "\t\\[f'(%s) = ", forest->vars_arr[var_i].name);
         else
-            fprintf (tex_file, "\t\\[\\frac{\\partial f}{\\partial %s} = ", vars_arr[i]);
+            fprintf (tex_file, "\t\\[\\frac{\\partial f}{\\partial %s} = ", forest->vars_arr[var_i].name);
 
-        Formula_Dump (forest[i], tex_file);
+        Formula_Dump (forest->tree_arr[var_i], tex_file);
 
         fprintf (tex_file, "\\]\n");
     }

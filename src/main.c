@@ -20,11 +20,12 @@ int main (int argc, char *argv[])
 
     free (buffer);
 
-    int n_vars = 0;
-    struct Node **forest = Differentiator (root, &n_vars);
-    MY_ASSERT (forest, "Differentiator ()", FUNC_ERROR, ERROR);
+    struct Forest *forest = Forest_Ctor (root);
 
-    int FD_status = Forest_Dtor (forest, n_vars);
+    int D_status = Differentiator (root, forest);
+    MY_ASSERT (D_status != ERROR, "Differentiator ()", FUNC_ERROR, ERROR);
+
+    int FD_status = Forest_Dtor (forest);
     MY_ASSERT (FD_status , "Forest_Dtor ()", FUNC_ERROR, ERROR);
 
     Tree_Destructor (root);

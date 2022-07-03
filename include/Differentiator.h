@@ -87,10 +87,26 @@ struct Node
     struct Node *parent;
 };
 
+struct Var
+{
+    char *name;
+    double value;
+};
+
+struct Forest
+{
+    struct Node **tree_arr;
+    struct Var  *vars_arr;
+    int n_vars;
+};
+
 struct Node  *Plant_Tree      (const char *buffer, const long n_symbs);
 int           Tree_Destructor (struct Node *node_ptr);
-struct Node **Differentiator  (const struct Node *root, int *n_vars);
-int           Forest_Dtor     (struct Node **forest, const int n_vars);
-int           Tree_Dump       (const struct Node *root_ptr, const char *text_file_name, const char *image_file_name, const char *var);
+
+int            Differentiator (const struct Node *root, struct Forest *forest);
+struct Forest *Forest_Ctor    (const struct Node *root);
+int            Forest_Dtor    (struct Forest *forest);
+
+int Tree_Dump (const struct Node *root_ptr, const char *text_file_name, const char *image_file_name, const char *var);
 
 #endif
