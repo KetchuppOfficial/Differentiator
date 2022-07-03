@@ -29,6 +29,7 @@ int main (int argc, char *argv[])
 
     int n_vars = 0;
     struct Node **forest = Differentiator (root, &n_vars);
+    MY_ASSERT (forest, "Differentiator ()", FUNC_ERROR, ERROR);
 
     int FD_status = Forest_Dtor (forest, n_vars);
     MY_ASSERT (FD_status , "Forest_Dtor ()", FUNC_ERROR, ERROR);
