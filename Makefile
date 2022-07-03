@@ -7,7 +7,7 @@ BIN      = ./bin/
 SRCDIR   = ./src/
 BUILDDIR = ./build/
 
-SRC_LIST = main.c Lexer.c Parser.c Stack.c Graphic_Dump.c Differentiator.c
+SRC_LIST = main.c Expression_Tree.c Stack.c Graphic_Dump.c Differentiator.c
 SRC = $(addprefix $(SRCDIR), $(SRC_LIST))
 
 SUBS := $(SRC)
