@@ -15,17 +15,10 @@ int main (int argc, char *argv[])
     long n_symbs = 0L;
     char *buffer = Make_File_Buffer (argv[1], &n_symbs);
     MY_ASSERT (buffer, "Make_File_Buffer ()", FUNC_ERROR, ERROR);
-    
-    int n_tokens = 0;
-    struct Token *token_arr = Lexer (buffer, n_symbs, &n_tokens);
-    MY_ASSERT (token_arr, "Lexer ()", FUNC_ERROR, ERROR);
+
+    struct Node *root = Plant_Tree (buffer, n_symbs);
 
     free (buffer);
-
-    struct Node *root = Parser (token_arr, n_tokens);
-    MY_ASSERT (root, "Parser ()", FUNC_ERROR, ERROR);
-
-    free (token_arr);
 
     int n_vars = 0;
     struct Node **forest = Differentiator (root, &n_vars);
