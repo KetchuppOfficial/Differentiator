@@ -39,7 +39,7 @@ static int Lexer_ (const char *str, const long n_symbs, struct Token *token_arr)
     int letter_i = 0;
     
     int symb_i = 0, token_i = 0;
-    while (symb_i < n_symbs)
+    while (symb_i < n_symbs && str[symb_i] != '\n')
     {
         switch (str[symb_i])
         {
