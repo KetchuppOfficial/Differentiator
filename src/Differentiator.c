@@ -56,46 +56,46 @@ static int Print_Pow_Operand  (const struct Node *node_ptr, FILE *tex_file);
 
 struct Node **Differentiator (const struct Node *root, int *n_vars)
 {
-    MY_ASSERT (root,   "struct Node *root", NULL_PTR, ERROR);
-    MY_ASSERT (n_vars, "int *n_vars",       NULL_PTR, ERROR);
+    MY_ASSERT (root,   "struct Node *root", NULL_PTR, NULL);
+    MY_ASSERT (n_vars, "int *n_vars",       NULL_PTR, NULL);
 
     struct Node *root_copy = Copy_Tree (root, NULL);
-    MY_ASSERT (root_copy, "Copy_Tree ()", FUNC_ERROR, ERROR);
+    MY_ASSERT (root_copy, "Copy_Tree ()", FUNC_ERROR, NULL);
     
     int O_status = Optimizer (&root_copy);
-    MY_ASSERT (O_status != ERROR, "Optimizer ()", FUNC_ERROR, ERROR);
+    MY_ASSERT (O_status != ERROR, "Optimizer ()", FUNC_ERROR, NULL);
     
     *n_vars = 0;
     char **vars_arr = Find_Vars (root_copy, n_vars);
-    MY_ASSERT (vars_arr, "Find_Vars ()", FUNC_ERROR, ERROR);
+    MY_ASSERT (vars_arr, "Find_Vars ()", FUNC_ERROR, NULL);
 
     struct Node **forest = Forest_Ctor (*n_vars);
-    MY_ASSERT (forest, "Forest_Ctor ()", FUNC_ERROR, ERROR);
+    MY_ASSERT (forest, "Forest_Ctor ()", FUNC_ERROR, NULL);
 
     for (int var_i = 0; var_i < *n_vars; var_i++)
     {
         int DOV_status = Diff_One_Var (root_copy, vars_arr[var_i], forest[var_i]);
-        MY_ASSERT (DOV_status != ERROR, "Diff_One_Var ()", FUNC_ERROR, ERROR);
+        MY_ASSERT (DOV_status != ERROR, "Diff_One_Var ()", FUNC_ERROR, NULL);
 
         O_status = Optimizer (forest + var_i);
-        MY_ASSERT (O_status != ERROR, "Optimizer ()", FUNC_ERROR, ERROR);
+        MY_ASSERT (O_status != ERROR, "Optimizer ()", FUNC_ERROR, NULL);
 
         int DOT_status = Dump_One_Tree (root_copy, forest[var_i], vars_arr[var_i], *n_vars);
-        MY_ASSERT (DOT_status != ERROR, "Dump_One_Tree ()", FUNC_ERROR, ERROR);
+        MY_ASSERT (DOT_status != ERROR, "Dump_One_Tree ()", FUNC_ERROR, NULL);
     }
 
     int DIT_status = Dump_In_Tex (root_copy, forest, vars_arr, *n_vars);
-    MY_ASSERT (DIT_status != ERROR, "Dump_In_Tex ()", FUNC_ERROR, ERROR);
+    MY_ASSERT (DIT_status != ERROR, "Dump_In_Tex ()", FUNC_ERROR, NULL);
 
     int TD_status = Tree_Destructor (root_copy);
-    MY_ASSERT (TD_status != ERROR, "Tree_Destructor ()", FUNC_ERROR, ERROR);
+    MY_ASSERT (TD_status != ERROR, "Tree_Destructor ()", FUNC_ERROR, NULL);
     
     for (int var_i = 0; var_i < *n_vars; var_i++)
         free (vars_arr[var_i]);
 
     free (vars_arr);
 
-    return NO_ERRORS;
+    return forest;
 }
 
 static struct Node **Forest_Ctor (const int n_vars)
