@@ -3,14 +3,17 @@
 
 // ========================================== STATIC PROTOTYPES ========================================== //
 
-static struct Node **Forest_Ctor   (const int n_vars);
-static int           Dump_One_Tree (const struct Node *func_root, const struct Node *der_root, const char *var, const int n_vars);
-static char        **Find_Vars     (const struct Node *node_ptr, int *n_vars);
-static int           Add_Vars      (const struct Node* node_ptr, char **vars_arr);
-static bool          Find_Name     (char **vars_arr, const char *var, const int n_vars);
+static struct Node **Forest_Ctor (const int n_vars);
 
-static int Diff_One_Var (const struct Node *node_ptr, const char *var, struct Node *new_node_ptr);
+#ifdef GRAPHIC_DUMP
+static int Dump_One_Tree (const struct Node *func_root, const struct Node *der_root, const char *var, const int n_vars);
+#endif
 
+static char **Find_Vars (const struct Node *node_ptr, int *n_vars);
+static int    Add_Vars  (const struct Node* node_ptr, char **vars_arr);
+static bool   Find_Name (char **vars_arr, const char *var, const int n_vars);
+
+static int          Diff_One_Var         (const struct Node *node_ptr, const char *var, struct Node *new_node_ptr);
 static struct Node *Differentiate_Inside (struct Node *what_diff, struct Node *parent, const char *var);
 static struct Node *Create_Node_         (enum Types node_type, struct Node *parent, int parmN, ...);
 static struct Node *Copy_Tree            (const struct Node *node_ptr, struct Node *parent);
@@ -45,10 +48,12 @@ static double Calc_Expression     (const struct Node *node_ptr);
 static bool   Check_If_Math_Sign  (const int node_type);
 static int    Compare_Double      (const double first, const double second);
 
+#ifdef TEX_DUMP
 static int Dump_In_Tex        (const struct Node *orig_tree, struct Node **forest, char **vars_arr, const int n_vars);
 static int Formula_Dump       (const struct Node *node_ptr, FILE *tex_file);
 static int Print_Mult_Operand (const struct Node *node_ptr, FILE *tex_file);
 static int Print_Pow_Operand  (const struct Node *node_ptr, FILE *tex_file);
+#endif
 
 // ======================================================================================================= //
 
@@ -80,12 +85,16 @@ struct Node **Differentiator (const struct Node *root, int *n_vars)
         O_status = Optimizer (forest + var_i);
         MY_ASSERT (O_status != ERROR, "Optimizer ()", FUNC_ERROR, NULL);
 
+        #ifdef GRAPHIC_DUMP
         int DOT_status = Dump_One_Tree (root_copy, forest[var_i], vars_arr[var_i], *n_vars);
         MY_ASSERT (DOT_status != ERROR, "Dump_One_Tree ()", FUNC_ERROR, NULL);
+        #endif
     }
 
+    #ifdef TEX_DUMP
     int DIT_status = Dump_In_Tex (root_copy, forest, vars_arr, *n_vars);
     MY_ASSERT (DIT_status != ERROR, "Dump_In_Tex ()", FUNC_ERROR, NULL);
+    #endif
 
     int TD_status = Tree_Destructor (root_copy);
     MY_ASSERT (TD_status != ERROR, "Tree_Destructor ()", FUNC_ERROR, NULL);
@@ -130,6 +139,7 @@ int Forest_Dtor (struct Node **forest, const int n_vars)
     return NO_ERRORS;
 }
 
+#ifdef GRAPHIC_DUMP
 static int Dump_One_Tree (const struct Node *func_root, const struct Node *der_root, const char *var, const int n_vars)
 {
     MY_ASSERT (func_root,  "const struct Node *func_root", NULL_PTR, ERROR);
@@ -183,6 +193,7 @@ static int Dump_One_Tree (const struct Node *func_root, const struct Node *der_r
 
     return NO_ERRORS;
 }
+#endif
 
 #define MAX_N_VARS 50
 
@@ -1489,6 +1500,7 @@ static int Compare_Double (const double first, const double second)
 
 // ============================================== TeX DUMP =============================================== //
 
+#ifdef TEX_DUMP
 static int Dump_In_Tex (const struct Node *orig_tree, struct Node **forest, char **vars_arr, const int n_vars)
 {
     MY_ASSERT (orig_tree,  "const struct Node *orig_tree", NULL_PTR, ERROR);
@@ -1528,7 +1540,7 @@ static int Dump_In_Tex (const struct Node *orig_tree, struct Node **forest, char
 
     Close_File (tex_file, "./output/formulas.txt");
 
-    system ("pdflatex -output-directory=output ./output/formulas.tex");
+    system ("pdflatex -output-directory=output ./output/formulas.tex > /dev/null");
     system ("xdg-open ./output/formulas.pdf");
 
     return NO_ERRORS;
@@ -1762,5 +1774,6 @@ static int Print_Pow_Operand (const struct Node *node_ptr, FILE *tex_file)
 
     return NO_ERRORS;
 }
+#endif
 
 // ======================================================================================================= //
